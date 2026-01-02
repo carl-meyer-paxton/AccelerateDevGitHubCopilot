@@ -16,15 +16,8 @@ public class JsonPatronRepository : IPatronRepository
     {
         await _jsonData.EnsureDataLoaded();
 
-        List<Patron> searchResults = new List<Patron>();
-        foreach (Patron patron in _jsonData.Patrons)
-        {
-            if (patron.Name.Contains(searchInput))
-            {
-                searchResults.Add(patron);
-            }
-        }
-        searchResults.Sort((p1, p2) => String.Compare(p1.Name, p2.Name));
+        var patrons = _jsonData.Patrons ?? new List<Patron>();
+        var searchResults = patrons.Where(p => p.Name.Contains(searchInput)).OrderBy(p => p.Name).ToList();
 
         searchResults = _jsonData.GetPopulatedPatrons(searchResults);
 
@@ -35,30 +28,13 @@ public class JsonPatronRepository : IPatronRepository
     {
         await _jsonData.EnsureDataLoaded();
 
-        foreach (Patron patron in _jsonData.Patrons!)
-        {
-            if (patron.Id == id)
-            {
-                Patron populated = _jsonData.GetPopulatedPatron(patron);
-                return populated;
-            }
-        }
-        return null;
+        return _jsonData.Patrons?.Where(p => p.Id == id).Select(p => _jsonData.GetPopulatedPatron(p)).FirstOrDefault();
     }
 
     public async Task UpdatePatron(Patron patron)
     {
         await _jsonData.EnsureDataLoaded();
-        var patrons = _jsonData.Patrons!;
-        Patron existingPatron = null;
-        foreach (var p in patrons)
-        {
-            if (p.Id == patron.Id)
-            {
-                existingPatron = p;
-                break;
-            }
-        }
+        var existingPatron = _jsonData.Patrons?.FirstOrDefault(p => p.Id == patron.Id);
         if (existingPatron != null)
         {
             existingPatron.Name = patron.Name;
@@ -66,7 +42,7 @@ public class JsonPatronRepository : IPatronRepository
             existingPatron.MembershipStart = patron.MembershipStart;
             existingPatron.MembershipEnd = patron.MembershipEnd;
             existingPatron.Loans = patron.Loans;
-            await _jsonData.SavePatrons(patrons);
+            await _jsonData.SavePatrons(_jsonData.Patrons!);
             await _jsonData.LoadData();
         }
     }

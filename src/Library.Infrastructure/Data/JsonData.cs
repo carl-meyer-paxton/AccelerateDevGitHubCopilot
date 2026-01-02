@@ -97,25 +97,15 @@ public class JsonData
 
     public Patron GetPopulatedPatron(Patron p)
     {
-        Patron populated = new Patron
+        return new Patron
         {
             Id = p.Id,
             Name = p.Name,
             ImageName = p.ImageName,
             MembershipStart = p.MembershipStart,
             MembershipEnd = p.MembershipEnd,
-            Loans = new List<Loan>()
+            Loans = Loans?.Where(loan => loan.PatronId == p.Id).Select(GetPopulatedLoan).ToList() ?? new List<Loan>()
         };
-
-        foreach (Loan loan in Loans!)
-        {
-            if (loan.PatronId == p.Id)
-            {
-                populated.Loans.Add(GetPopulatedLoan(loan));
-            }
-        }
-
-        return populated;
     }
 
     public Loan GetPopulatedLoan(Loan l)
@@ -130,23 +120,8 @@ public class JsonData
             ReturnDate = l.ReturnDate
         };
 
-        foreach (BookItem bi in BookItems!)
-        {
-            if (bi.Id == l.BookItemId)
-            {
-                populated.BookItem = GetPopulatedBookItem(bi);
-                break;
-            }
-        }
-
-        foreach (Patron p in Patrons!)
-        {
-            if (p.Id == l.PatronId)
-            {
-                populated.Patron = p;
-                break;
-            }
-        }
+        populated.BookItem = BookItems!.Where(bi => bi.Id == l.BookItemId).Select(GetPopulatedBookItem).FirstOrDefault();
+        populated.Patron = Patrons!.FirstOrDefault(p => p.Id == l.PatronId);
 
         return populated;
     }
@@ -161,14 +136,7 @@ public class JsonData
             Condition = bi.Condition
         };
 
-        foreach (Book b in Books!)
-        {
-            if (b.Id == bi.BookId)
-            {
-                populated.Book = GetPopulatedBook(b);
-                break;
-            }
-        }
+        populated.Book = Books!.Where(b => b.Id == bi.BookId).Select(GetPopulatedBook).FirstOrDefault();
 
         return populated;
     }
@@ -185,18 +153,7 @@ public class JsonData
             ImageName = b.ImageName
         };
 
-        foreach (Author a in Authors!)
-        {
-            if (a.Id == b.AuthorId)
-            {
-                populated.Author = new Author
-                {
-                    Id = a.Id,
-                    Name = a.Name
-                };
-                break;
-            }
-        }
+        populated.Author = Authors!.Where(a => a.Id == b.AuthorId).Select(a => new Author { Id = a.Id, Name = a.Name }).FirstOrDefault();
 
         return populated;
     }
