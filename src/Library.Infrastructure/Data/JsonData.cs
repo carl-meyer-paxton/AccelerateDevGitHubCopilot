@@ -201,6 +201,18 @@ public class JsonData
         return populated;
     }
 
+    public async Task<Book?> FindBookByTitle(string title)
+    {
+        await EnsureDataLoaded();
+
+        if (string.IsNullOrWhiteSpace(title)) return null;
+
+        var match = Books?.FirstOrDefault(b => !string.IsNullOrWhiteSpace(b.Title) && b.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+        if (match == null) return null;
+
+        return GetPopulatedBook(match);
+    }
+
     private async Task<T?> LoadJson<T>(string filePath)
     {
         using (FileStream jsonStream = File.OpenRead(filePath))
